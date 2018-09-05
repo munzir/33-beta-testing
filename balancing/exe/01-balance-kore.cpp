@@ -1,3 +1,4 @@
+
 /**
  * @file 01-balance.cpp
  * @author Munzir Zafar
@@ -15,6 +16,8 @@ using namespace Krang;
 
 /* ******************************************************************************************** */
 // For logging purposes
+
+ofstream pose_out_file;
 
 int Krang::COLOR_RED_BACKGROUND = 11;
 int Krang::COLOR_YELLOW_BACKGROUND = 12;
@@ -159,6 +162,20 @@ double presetArmConfs [][7] = {
   {  0.000,  0.000,  0.000,  0.000,  0.000,  0.000,  0.000},
   {  0.000,  0.000,  0.000,  0.000,  0.000,  0.000,  0.000},
 };
+
+
+/******************************************************************************/
+// Record data (the balanced pose) for offline COM analysis
+// Output Munzir format w/o heading, x, y, z, qLWheel, qRWheel, qKinect:
+// qBase (imu), qWaist, qTorso, qLArm0, ..., qLArm6, qRArm0, ..., qRArm6
+void recordPoseData(double dt, double * input, Eigen::Vector6d &state, dart::dynamics::SkeletonPtr robot_) {
+
+	pose_out_file << dt, input[0], input[1];
+	pose_out_file << state;
+	pose_out_file << robot_->getPositions();
+	pose_out_file << endl;
+}
+
 
 /* ********************************************************************************************* */
 /// Controls the arms
@@ -486,7 +503,9 @@ void run () {
 		input[1] = max(-49.0, min(49.0, input[1]));
 		if(debug) printf("u_theta: %lf, u_x: %lf, u_spin: %lf\n", u_theta, u_x, u_spin);
 		lastUleft = input[0], lastUright = input[1];
-		
+	
+		recordPoseData(dt, input, state, krang->robot);	
+
 		// Set the motor velocities
 		if(start) {
 			if(debug) cout << "Started..." << endl;
@@ -592,6 +611,8 @@ void init() {
 /// Send zero velocity to the motors and kill daemon. Also clean up daemon structs.
 void destroy() {
 
+	
+   pose_out_file.close();
 	cout << "destroying" << endl;
 
 	// ===========================
@@ -643,7 +664,7 @@ int main(int argc, char* argv[]) {
 	// Load the world and the robot
 	dart::utils::DartLoader dl;
   // world = dl.parseWorld("/etc/kore/scenes/01-World-Robot.urdf");
-	robot = dl.parseSkeleton("/home/munzir/project/krang/09-URDF/Krang/KrangNoKinect.urdf");
+	robot = dl.parseSkeleton("/home/munzir/project/krang/09-URDF/Krang/Krang.urdf");
 	assert((robot != NULL) && "Could not find the robot urdf");
 
 	string inputBetaFilename = "../../../18-OnlineCoM/betaConvergence/bestBetaVector.txt";
@@ -657,7 +678,8 @@ int main(int argc, char* argv[]) {
     cout << e.what() << endl;
     return EXIT_FAILURE;
   }
-	robot = setParameters(robot, beta, 4);
+	// TODO: Commented out to use urdf beta
+	//robot = setParameters(robot, beta, 4);
 	world = std::make_shared<World>();
 	world->addSkeleton(robot);
 
@@ -681,7 +703,15 @@ int main(int argc, char* argv[]) {
 	} 
 
 	getchar();
+	string trajNum = argv[1];
+	string inputPoseBaseFilename = "interposeTraj" + trajNum;
+	string inputPoseFilename = "../data/dataIn/poseTrajectoriesrfinalSet/" + inputPoseBaseFilename + ".txt";
+	string outputBalancedPoseFilename = "../data/dataOut/" + inputPoseBaseFilename + "balancedPoseTest.txt";
 
+
+
+    	pose_out_file.open(outputBalancedPoseFilename, ios::app);
+	
 	// Initialize, run, destroy
 	init();
 	run();
