@@ -664,10 +664,10 @@ int main(int argc, char* argv[]) {
 	// Load the world and the robot
 	dart::utils::DartLoader dl;
   // world = dl.parseWorld("/etc/kore/scenes/01-World-Robot.urdf");
-	robot = dl.parseSkeleton("/home/munzir/project/krang/09-URDF/Krang/Krang.urdf");
+	robot = dl.parseSkeleton("/home/munzir/Documents/Software/project/krang/09-URDF/Krang/Krang.urdf");
 	assert((robot != NULL) && "Could not find the robot urdf");
 
-	string inputBetaFilename = "/home/munzir/project/krang//18-OnlineCoM/betaConvergence/bestBetaVector.txt";
+	string inputBetaFilename = "/home/munzir/Documents/Software/project/krang/18-OnlineCoM/betaConvergence/bestBetaVector.txt";
 //	string inputBetaFilename = "../convergedBetaVector104PosesHardwareTrained.txt";
   Eigen::MatrixXd beta;
 	try {
@@ -679,7 +679,7 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
  }
 	// TODO: Commented out to use urdf beta
-	//robot = setParameters(robot, beta, 4);
+	robot = setParameters(robot, beta, 4);
 	world = std::make_shared<World>();
 	world->addSkeleton(robot);
 
