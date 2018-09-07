@@ -5,7 +5,7 @@ import numpy as np
 
 # Read Data
 
-with open("krang_run25") as f:
+with open("krang_run150") as f:
     lines = f.readlines()
 
 raw_data = [x.strip() for x in lines]
@@ -24,7 +24,7 @@ time = np.cumsum(data[:,0])
 
 plt.figure()
 
-titles = ["dt","leftWheel","rightWheel","state0","state1","state2","state3","state4","state5"]
+titles = ["dt","leftWheel","rightWheel","theta","dtheta","x/R","dx/R","psi","dpsi"]
 
 for i,title in enumerate(titles):
     plt.figure()
