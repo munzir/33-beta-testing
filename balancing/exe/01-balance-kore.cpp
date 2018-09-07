@@ -191,12 +191,12 @@ double presetArmConfs [][7] = {
 /******************************************************************************/
 // Record data (while balancing) for energy analysis
 // Output format
-// timestep, currLWheel, currRWheel, state?, pose in dart format
+// timestep, currLWheel, currRWheel, state?, pose in munzir format
 void recordPoseData(double dt, double * input, Eigen::Vector6d &state, dart::dynamics::SkeletonPtr robot_) {
 
     pose_out_file << dt << " " << input[0] << " " << input[1] << " ";
     pose_out_file << state.transpose() << " ";
-    pose_out_file << robot_->getPositions().transpose();
+    pose_out_file << dartToMunzir(robot_->getPositions().transpose(), robot_);
     pose_out_file << endl;
 }
 
@@ -527,10 +527,10 @@ void run () {
         input[1] = max(-49.0, min(49.0, input[1]));
         if(debug) printf("u_theta: %lf, u_x: %lf, u_spin: %lf\n", u_theta, u_x, u_spin);
         lastUleft = input[0], lastUright = input[1];
-    
+
         if (recording)
         {
-            recordPoseData(dt, input, state, krang->robot); 
+            recordPoseData(dt, input, state, krang->robot);
         }
 
         // Set the motor velocities
