@@ -15,7 +15,7 @@ using namespace Krang;
 
 /* ******************************************************************************************** */
 // For logging purposes
-
+pthread_mutex_t mutext = PTHREAD_MUTEX_INITIALIZER;
 ofstream pose_out_file;
 
 int Krang::COLOR_RED_BACKGROUND = 11;
