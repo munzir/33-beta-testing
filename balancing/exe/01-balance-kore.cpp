@@ -7,8 +7,10 @@
  */
 
 #include "helpers.h"
-#include "file_ops.hpp"
 #include "kore/display.hpp"
+
+#include "../../18h-Util/file_ops.hpp"
+#include "../../18h-Util/convert_pose_formats.hpp"
 
 using namespace std;
 using namespace Krang;
