@@ -165,6 +165,7 @@ double presetArmConfs [][7] = {
 
 /******************************************************************************/
 // Record data (while balancing) for energy analysis
+// Output format
 // timestep, currLWheel, currRWheel, state?, pose in dart format
 void recordPoseData(double dt, double * input, Eigen::Vector6d &state, dart::dynamics::SkeletonPtr robot_) {
 
