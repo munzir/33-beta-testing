@@ -56,6 +56,29 @@ struct LogState {
 
 };
 
+/******************************************************************************/
+// Trigger to record data
+// press d and enter to record / press x and enter to flag to ignore previous
+// line
+bool recording;
+void *kbhit(void *) {
+    char input;
+    double kOffset = 0.05;
+    while (true) {
+        input = cin.get();
+        pthread_mutex_lock(&mutext);
+
+        if (input == 'd') {
+            recording = true;//recordPoseData();
+        }
+        if (input == 'x') {
+            recording = false;//pose_out_file << "DELETE PREVIOUS LINE" << endl;
+        }
+        pthread_mutex_unlock(&mutext);
+    }
+}
+
+
 /// The vector of states
 vector <LogState*> logStates;
 
@@ -504,7 +527,10 @@ void run () {
         if(debug) printf("u_theta: %lf, u_x: %lf, u_spin: %lf\n", u_theta, u_x, u_spin);
         lastUleft = input[0], lastUright = input[1];
     
-        recordPoseData(dt, input, state, krang->robot); 
+        if (recording)
+        {
+            recordPoseData(dt, input, state, krang->robot); 
+        }
 
         // Set the motor velocities
         if(start) {
