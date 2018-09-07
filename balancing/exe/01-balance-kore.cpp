@@ -1,4 +1,3 @@
-
 /**
  * @file 01-balance.cpp
  * @author Munzir Zafar
@@ -188,14 +187,14 @@ double presetArmConfs [][7] = {
 
 
 /******************************************************************************/
-// Record data (the balanced pose) for offline COM analysis
-// Output Munzir format w/o heading, x, y, z, qLWheel, qRWheel, qKinect:
-// qBase (imu), qWaist, qTorso, qLArm0, ..., qLArm6, qRArm0, ..., qRArm6
+// Record data (while balancing) for energy analysis
+// Output format
+// timestep, currLWheel, currRWheel, state?, pose in dart format
 void recordPoseData(double dt, double * input, Eigen::Vector6d &state, dart::dynamics::SkeletonPtr robot_) {
 
     pose_out_file << dt << " " << input[0] << " " << input[1] << " ";
-    pose_out_file << state << " ";
-    pose_out_file << robot_->getPositions();
+    pose_out_file << state.transpose() << " ";
+    pose_out_file << robot_->getPositions().transpose();
     pose_out_file << endl;
 }
 
@@ -637,7 +636,7 @@ void init() {
 /// Send zero velocity to the motors and kill daemon. Also clean up daemon structs.
 void destroy() {
 
-    
+
    pose_out_file.close();
     cout << "destroying" << endl;
 
@@ -687,37 +686,52 @@ SkeletonPtr setParameters(SkeletonPtr robot, Eigen::MatrixXd betaParams, int bod
 /// The main thread
 int main(int argc, char* argv[]) {
 
+    // INPUT on below line (path to robot urdf file)
+    string robotPath = "/home/munzir/Documents/Software/project/krang/09-URDF/Krang/Krang.urdf";
+
+    // INPUT on below line (input beta filename)
+    string inputBetaFilename = "../data/dataIn/betas/betaVectors1initialBetahardwareAll190Vectors.txt";
+    //string inputBetaFilename = "/home/munzir/Documents/Software/project/krang/18-OnlineCoM/betaConvergence/bestBetaVector.txt";
+    //string inputBetaFilename = "../convergedBetaVector104PosesHardwareTrained.txt";
+
+    // Read the beta number
+    string betaNumber = argv[1];
+    int betaIndex = stoi(betaNumber) - 1;
+
+    // Create output files
+    string inputBetaBaseFilename = extractFilename(inputBetaFilename);
+    string outputStateFilename = "../data/dataOut/" + inputBetaBaseFilename + "num" + betaNumber + "statedump.txt";
+
     // Load the world and the robot
     dart::utils::DartLoader dl;
-  // world = dl.parseWorld("/etc/kore/scenes/01-World-Robot.urdf");
-    robot = dl.parseSkeleton("/home/munzir/Documents/Software/project/krang/09-URDF/Krang/Krang.urdf");
+    // world = dl.parseWorld("/etc/kore/scenes/01-World-Robot.urdf");
+    robot = dl.parseSkeleton(robotPath);
     assert((robot != NULL) && "Could not find the robot urdf");
 
-    string inputBetaFilename = "/home/munzir/Documents/Software/project/krang/18-OnlineCoM/betaConvergence/bestBetaVector.txt";
-//  string inputBetaFilename = "../convergedBetaVector104PosesHardwareTrained.txt";
-  Eigen::MatrixXd beta;
+    // Read betas
+    Eigen::MatrixXd allBetas;
     try {
-        cout << "Reading converged beta ...\n";
-    beta = readInputFileAsMatrix(inputBetaFilename);
-    cout << "|-> Done\n";
-  } catch (exception& e) {
-    cout << e.what() << endl;
-    return EXIT_FAILURE;
- }
-    // TODO: Commented out to use urdf beta
-    robot = setParameters(robot, beta, 4);
+        cout << "Reading input betas ...\n";
+        allBetas = readInputFileAsMatrix(inputBetaFilename);
+        cout << "|-> Done\n";
+    } catch (exception& e) {
+        cout << e.what() << endl;
+        return EXIT_FAILURE;
+    }
+
+    robot = setParameters(robot, allBetas.row(betaIndex), 4);
     world = std::make_shared<World>();
     world->addSkeleton(robot);
 
     // Read the gains from the command line
-/*
+    /*
     assert(argc >= 7 && "Where is my gains for th, x and spin?");
     K << atof(argv[1]), atof(argv[2]), atof(argv[3]), atof(argv[4]), atof(argv[5]), atof(argv[6]);
     jsFwdAmp = 0.3;
     jsSpinAmp = 0.4;
 
     cout << "K_bal: " << K_bal.transpose() << "\nPress enter: " << endl;
-*/
+    */
 
     readGains();
 
@@ -729,15 +743,9 @@ int main(int argc, char* argv[]) {
     }
 
     getchar();
-    string trajNum = argv[1];
-    string inputPoseBaseFilename = "interposeTraj" + trajNum;
-    string inputPoseFilename = "../data/dataIn/poseTrajectoriesrfinalSet/" + inputPoseBaseFilename + ".txt";
-    string outputBalancedPoseFilename = "../data/dataOut/" + inputPoseBaseFilename + "balancedPoseTest.txt";
 
+    pose_out_file.open(outputStateFilename);
 
-
-        pose_out_file.open(outputBalancedPoseFilename, ios::app);
-    
     // Initialize, run, destroy
     init();
     run();
