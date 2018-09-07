@@ -169,8 +169,8 @@ double presetArmConfs [][7] = {
 void recordPoseData(double dt, double * input, Eigen::Vector6d &state, dart::dynamics::SkeletonPtr robot_) {
 
     pose_out_file << dt << " " << input[0] << " " << input[1] << " ";
-    pose_out_file << state << " ";
-    pose_out_file << robot_->getPositions();
+    pose_out_file << state.transpose() << " ";
+    pose_out_file << robot_->getPositions().transpose();
     pose_out_file << endl;
 }
 
@@ -681,7 +681,6 @@ int main(int argc, char* argv[]) {
     robot = dl.parseSkeleton(robotPath);
     assert((robot != NULL) && "Could not find the robot urdf");
 
-
     // Read betas
     Eigen::MatrixXd allBetas;
     try {
@@ -693,7 +692,6 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    // TODO: Commented out to use urdf beta
     robot = setParameters(robot, allBetas.row(betaIndex), 4);
     world = std::make_shared<World>();
     world->addSkeleton(robot);
@@ -719,7 +717,7 @@ int main(int argc, char* argv[]) {
 
     getchar();
 
-    pose_out_file.open(outputStateFilename, ios::app);
+    pose_out_file.open(outputStateFilename);
 
     // Initialize, run, destroy
     init();
