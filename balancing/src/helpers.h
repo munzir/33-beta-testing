@@ -62,6 +62,7 @@ somatic_d_t daemon_cx;				///< The context of the current daemon
 Krang::Hardware* krang;				///< Interface for the motor and sensors on the hardware
 WorldPtr world;			///< the world representation in dart
 SkeletonPtr robot;			///< the robot representation in dart
+SkeletonPtr good_robot;			///< the robot representation in dart used to determine if we can stand
 
 Somatic__WaistCmd *waistDaemonCmd = somatic_waist_cmd_alloc(); ///< Cmds for waist daemon
 ach_channel_t js_chan;				///< Read joystick data on this channel
@@ -130,7 +131,7 @@ bool getJoystickInput(double& js_forw, double& js_spin);
 void updateReference (double js_forw, double js_spin, double dt, Vector6d& refState);
 
 /// Get the joint values from the encoders and the imu and compute the center of mass as well 
-void getState(Vector6d& state, double dt, Vector3d* com = NULL);
+void getState(Vector6d& state, double dt, Vector3d* com = NULL, SkeletonPtr rob = robot);
 
 /// Updates the dart robot representation
 void updateDart (double imu);

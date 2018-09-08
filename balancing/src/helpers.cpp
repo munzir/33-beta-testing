@@ -65,13 +65,13 @@ vector <int> imuWaistTorso_ids (imuWaistTorso_ids_a, imuWaistTorso_ids_a + 3);
 
 /* ******************************************************************************************** */
 /// Get the joint values from the encoders and the imu and compute the center of mass as well 
-void getState(Vector6d& state, double dt, Vector3d* com_) {
+void getState(Vector6d& state, double dt, Vector3d* com_, SkeletonPtr rob) {
 
 	// Read motor encoders, imu and ft and update dart skeleton
   krang->updateSensors(dt);
 
 	// Calculate the COM	
-  Vector3d com = robot->getCOM() - robot->getPositions().segment(3,3);
+  Vector3d com = rob->getCOM() - rob->getPositions().segment(3,3);
 //	Vector3d com = Eigen::Vector3d::Zero();
 //	com(2) -= 0.264;
 //	com(0) += 0.008;
@@ -89,6 +89,7 @@ void getState(Vector6d& state, double dt, Vector3d* com_) {
 	// Making adjustment in com to make it consistent with the hack above for state(0)
 	com(0) = com(2) * tan(state(0));
 }
+
 
 /* ******************************************************************************************** */
 /// Update reference left and right wheel pos/vel from joystick data where dt is last iter. time

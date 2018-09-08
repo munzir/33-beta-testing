@@ -329,7 +329,8 @@ void run () {
 
     // Initially the reference position and velocities are zero (don't move!) (and error!)
     // Initializing here helps to print logs of the previous state
-    Vector6d refState = Vector6d::Zero(), state = Vector6d::Zero(), error = Vector6d::Zero();
+    Vector6d refState = Vector6d::Zero(), state = Vector6d::Zero(), actual_state = Vector6d::Zero(),
+             actual_error = Vector6d::Zero(), error = Vector6d::Zero();
 
     // Read the FT sensor wrenches, shift them on the wheel axis and display
     size_t c_ = 0;
@@ -380,6 +381,7 @@ void run () {
 
         // Get the current state and ask the user if they want to start
         getState(state, dt, &com);
+        getState(actual_state, dt, NULL, good_robot);
         if(debug) cout << "\nstate: " << state.transpose() << endl;
         if(debug) cout << "com: " << com.transpose() << endl;
         if(debug) cout << "WAIST ANGLE: " << krang->waist->pos[0] << endl;
@@ -467,6 +469,7 @@ void run () {
         // Compute the error term between reference and current, and weight with gains (spin separate)
         if(debug) cout << "K: " << K.transpose() << endl;
         error = state - refState;
+        actual_error = actual_state - refState;
 
         // If in ground Lo mode and waist angle increases beyond 150.0 goto groundHi mode
         if(MODE == 1) {
@@ -579,7 +582,7 @@ void run () {
 
             // If in ground mode and state error is not high stand up
             if(MODE == 1) {
-                if(state(0) < 0.0 && error(0) > -10.0*M_PI/180.0)   {
+                if(actual_state(0) < 0.0 && actual_error(0) > -10.0*M_PI/180.0)   {
                     printf("\n\n\nMode 2\n\n\n");
                     K = K_stand;
                     MODE = 2;
@@ -703,6 +706,7 @@ int main(int argc, char* argv[]) {
     string betaNumber = argv[1];
     int betaIndex = stoi(betaNumber) - 1;
 
+    int betaBestIndex = 189; //Get best beta
     // Create output files
     string inputBetaBaseFilename = extractFilename(inputBetaFilename);
     string outputStateFilename = "../data/dataOut/" + inputBetaBaseFilename + "num" + betaNumber + "statedump.txt";
@@ -711,6 +715,7 @@ int main(int argc, char* argv[]) {
     dart::utils::DartLoader dl;
     // world = dl.parseWorld("/etc/kore/scenes/01-World-Robot.urdf");
     robot = dl.parseSkeleton(robotPath);
+    good_robot = dl.parseSkeleton(robotPath);
     assert((robot != NULL) && "Could not find the robot urdf");
 
     // Read betas
@@ -725,6 +730,7 @@ int main(int argc, char* argv[]) {
     }
 
     robot = setParameters(robot, allBetas.row(betaIndex), 4);
+    good_robot = setParameters(robot, allBetas.row(betaBestIndex), 4);
     world = std::make_shared<World>();
     world->addSkeleton(robot);
 
