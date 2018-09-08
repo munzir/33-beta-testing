@@ -4,38 +4,65 @@ import numpy as np
 
 
 # Read Data
+data_files = ["beta"+str(i)+"_0" for i in [190,64,32,16]]
 
-with open("krang_run150") as f:
-    lines = f.readlines()
+full = {}
+for data_file in data_files:
 
-raw_data = [x.strip() for x in lines]
+    with open(data_file) as f:
+        lines = f.readlines()
 
-rows = len(raw_data)
-cols = len(raw_data[0].split())
+    raw_data = [x.strip() for x in lines]
 
-data = np.zeros((rows,cols))
+    rows = len(raw_data)
+    cols = len(raw_data[0].split())
 
-for i,row_space in enumerate(raw_data):
-    row = row_space.split()
-    data[i,:] =  row
+    data = np.zeros((rows,cols))
 
-time = np.cumsum(data[:,0])
+    for i,row_space in enumerate(raw_data):
+        row = row_space.split()
+        data[i,:] =  row
+
+    time = np.cumsum(data[:,0])
+
+
+    full[data_file] = {}
+    full[data_file]['raw'] = data
+    full[data_file]['raw_time'] = time
+
+    start = np.argmax(np.abs(data[:,1])>1)
+    end = np.argmax(time-time[start]>60)
+
+
+    full[data_file]['trim'] = data[start:end,:]
+    full[data_file]['time'] = time[start:end]
 
 
 plt.figure()
 
 titles = ["dt","leftWheel","rightWheel","theta","dtheta","x/R","dx/R","psi","dpsi"]
 
-for i,title in enumerate(titles):
+# pose_out_file << dt << " " << input[0] << " " << input[1] << " ";
+# pose_out_file << state.transpose() << " ";
+# pose_out_file << dartToMunzir(robot_->getPositions().transpose(), robot_).transpose();
+# pose_out_file << endl;
+
+# for i,title in enumerate(titles):
+#     plt.figure()
+#     # plt.subplot(2,1,i)
+#     plt.plot(time,data[:,i])
+#     plt.title(title)
+
+for data_file in data_files:
     plt.figure()
     # plt.subplot(2,1,i)
-    plt.plot(time,data[:,i])
-    plt.title(title)
+    plt.plot(full[data_file]['trim'][:,1])
+    plt.title(data_file)
 
 plt.show()
 
-print data
-print rows, cols
+# print data
+# print rows, cols
 
 
 
