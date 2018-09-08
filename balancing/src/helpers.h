@@ -60,6 +60,7 @@ typedef Matrix<double, 6, 6> Matrix6d;			///< A typedef for convenience to conta
 somatic_d_t daemon_cx;				///< The context of the current daemon
 
 Krang::Hardware* krang;				///< Interface for the motor and sensors on the hardware
+Krang::Hardware* good_krang;             ///< Interface for the motor and sensors on the hardware
 WorldPtr world;			///< the world representation in dart
 SkeletonPtr robot;			///< the robot representation in dart
 SkeletonPtr good_robot;			///< the robot representation in dart used to determine if we can stand
