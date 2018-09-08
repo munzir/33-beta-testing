@@ -55,7 +55,9 @@ for data_file in data_files:
 
 plt.figure()
 for data_file in data_files:
-    plt.plot(full[data_file]['time'],full[data_file]['trim'][:,1])
+    plt.plot(full[data_file]['time'],full[data_file]['trim'][:,1],label=data_file)
+plt.legend()
+
 
 plt.figure()
 for data_file in data_files:
