@@ -62,6 +62,7 @@ struct LogState {
 // press d and enter to record / press x and enter to flag to ignore previous
 // line
 bool recording;
+/*
 void *kbhit(void *) {
     char input;
     double kOffset = 0.05;
@@ -78,6 +79,7 @@ void *kbhit(void *) {
         pthread_mutex_unlock(&mutext);
     }
 }
+*/
 
 
 /// The vector of states
@@ -196,7 +198,7 @@ void recordPoseData(double dt, double * input, Eigen::Vector6d &state, dart::dyn
 
     pose_out_file << dt << " " << input[0] << " " << input[1] << " ";
     pose_out_file << state.transpose() << " ";
-    pose_out_file << dartToMunzir(robot_->getPositions().transpose(), robot_);
+    pose_out_file << dartToMunzir(robot_->getPositions().transpose(), robot_).transpose();
     pose_out_file << endl;
 }
 
@@ -528,6 +530,7 @@ void run () {
         if(debug) printf("u_theta: %lf, u_x: %lf, u_spin: %lf\n", u_theta, u_x, u_spin);
         lastUleft = input[0], lastUright = input[1];
 
+        recording = true;
         if (recording)
         {
             recordPoseData(dt, input, state, krang->robot);
