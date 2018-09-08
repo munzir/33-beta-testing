@@ -35,10 +35,9 @@ for data_file in data_files:
 
 
     full[data_file]['trim'] = data[start:end,:]
-    full[data_file]['time'] = time[start:end]
+    full[data_file]['time'] = time[start:end]-time[start]
 
 
-plt.figure()
 
 titles = ["dt","leftWheel","rightWheel","theta","dtheta","x/R","dx/R","psi","dpsi"]
 
@@ -53,11 +52,9 @@ titles = ["dt","leftWheel","rightWheel","theta","dtheta","x/R","dx/R","psi","dps
 #     plt.plot(time,data[:,i])
 #     plt.title(title)
 
+plt.figure()
 for data_file in data_files:
-    plt.figure()
-    # plt.subplot(2,1,i)
-    plt.plot(full[data_file]['trim'][:,1])
-    plt.title(data_file)
+    plt.plot(full[data_file]['time'],full[data_file]['trim'][:,1])
 
 plt.show()
 
