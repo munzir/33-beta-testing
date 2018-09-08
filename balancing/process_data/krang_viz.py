@@ -33,7 +33,6 @@ for data_file in data_files:
     start = np.argmax(np.abs(data[:,1])>1)
     end = np.argmax(time-time[start]>60)
 
-
     full[data_file]['trim'] = data[start:end,:]
     full[data_file]['time'] = time[start:end]-time[start]
 
@@ -46,15 +45,23 @@ titles = ["dt","leftWheel","rightWheel","theta","dtheta","x/R","dx/R","psi","dps
 # pose_out_file << dartToMunzir(robot_->getPositions().transpose(), robot_).transpose();
 # pose_out_file << endl;
 
-# for i,title in enumerate(titles):
-#     plt.figure()
-#     # plt.subplot(2,1,i)
-#     plt.plot(time,data[:,i])
-#     plt.title(title)
+for data_file in data_files:
+    plt.figure()
+    plt.suptitle(data_file)
+    for i,title in enumerate(titles):
+        plt.subplot(round(len(titles)/2.0),2,i+1)
+        plt.plot(full[data_file]['time'],full[data_file]['trim'][:,i])
+        plt.title(title)
 
 plt.figure()
 for data_file in data_files:
     plt.plot(full[data_file]['time'],full[data_file]['trim'][:,1])
+
+plt.figure()
+for data_file in data_files:
+    plt.plot(full[data_file]['time'],np.cumsum(np.abs(full[data_file]['trim'][:,1])))
+
+
 
 plt.show()
 
