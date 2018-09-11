@@ -41,11 +41,45 @@ for beta in betas:
         start = np.argmax(np.abs(data[:,1])>1)
         end = np.argmax(time-time[start]>60)
 
-        steady = end-np.argmax(np.abs(data[end:start:-1,1])>0.2*np.max(np.abs(data[start:end,1])))
+
+
+        steady = end-np.argmax(np.abs(data[end:start:-1,1])>0.3*np.max(np.abs(data[start:end,1])))
+
 
         full[beta][run]['trim'] = data[start:end,:]
         full[beta][run]['steady'] = data[steady:end,:]
         full[beta][run]['time'] = time[start:end]-time[start]
+
+
+        t10 = np.argmax(full[beta][run]['time']>10)
+        t40 = np.argmax(full[beta][run]['time']>10)
+
+        N = 20.0
+        smoothed = np.convolve(full[beta][run]['trim'][:,1],np.ones(int(N))/N)
+
+        integral = np.abs(np.multiply(full[beta][run]['trim'][:,1],data[start:end,0]))
+        trans_integral = np.sum(integral[:t10])
+        steady_integral = np.sum(integral[t40:])
+
+
+        full[beta][run]['overshoot'] = np.max(smoothed)
+        full[beta][run]['steady_state_time'] = time[steady]
+
+        full[beta][run]['trans_integral'] = (1.0/3600)*trans_integral
+        full[beta][run]['steady_integral'] = (1.0/3600)*steady_integral
+
+        full[beta][run]['resting_pos'] = full[beta][run]['trim'][-1,5]
+        full[beta][run]['overshoot_pos'] = np.argmax(np.abs(full[beta][run]['trim'][:,5]))
+
+
+
+
+for beta in betas:
+    for value in ['steady_state_time','overshoot','trans_integral','steady_integral','resting_pos','overshoot_pos']:
+        avg = np.average([full[beta][run][value] for run in runs])
+        std = np.std([full[beta][run][value] for run in runs])
+
+        print beta, value, avg, std
 
 
 for beta in betas:
@@ -101,12 +135,12 @@ for i,beta in enumerate(betas):
     
     plt.subplot(4,2,2*i+1)
     for run in runs:
-        t = full[beta][run]['time']
-        x = np.convolve(full[beta][run]['trim'][:,1],np.ones(10)/10.0)
-        plt.plot(t,x[:len(t)],label="run "+run)
+        # t = full[beta][run]['time']
+        # x = np.convolve(full[beta][run]['trim'][:,1],np.ones(10)/10.0)
+        # plt.plot(t,x[:len(t)],label="run "+run)
         
-        # x = np.convolve(full[beta][run]['steady'][:,1],np.ones(10)/10.0)
-        # plt.plot(x,label="run "+run)
+        x = np.convolve(full[beta][run]['steady'][:,1],np.ones(10)/10.0)
+        plt.plot(x,label="run "+run)
     plt.title(beta)
     plt.ylim(-40,20)
     plt.legend()
@@ -115,16 +149,22 @@ for i,beta in enumerate(betas):
 
 
 
-for beta in betas:
-    plt.figure()
+plt.figure()
+for i,beta in enumerate(betas):
+    plt.subplot(4,1,i+1)
     for run in runs:
         t = full[beta][run]['time']
         x = np.convolve(full[beta][run]['trim'][:,1],np.ones(10)/10.0)
+        # x = full[beta][run]['trim'][:,5]
         plt.plot(t,x[:len(t)],label="run "+run)
-    plt.title(beta)
+    plt.title("Beta Iteration "+beta)
     plt.ylim(-40,20)
+    plt.xlabel('Time (s)')
+    plt.ylabel('Current (A)')
+    plt.grid()
     plt.legend()
 
+#10 10 95 95 20 60
 
 
 plt.show()
