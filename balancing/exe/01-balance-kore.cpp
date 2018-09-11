@@ -382,6 +382,7 @@ void run () {
         // Get the current state and ask the user if they want to start
         getState(state, dt, &com);
         getState(actual_state, dt, NULL, good_robot);
+        if(debug) cout << "\nstandup relevant: " << actual_state[0] << " " << actual_error[0] << endl;
         if(debug) cout << "\nstate: " << state.transpose() << endl;
         if(debug) cout << "com: " << com.transpose() << endl;
         if(debug) cout << "WAIST ANGLE: " << krang->waist->pos[0] << endl;
@@ -629,6 +630,7 @@ void init() {
     int hwMode = Krang::Hardware::MODE_AMC | Krang::Hardware::MODE_LARM |
         Krang::Hardware::MODE_RARM | Krang::Hardware::MODE_TORSO | Krang::Hardware::MODE_WAIST;
     krang = new Krang::Hardware((Krang::Hardware::Mode) hwMode, &daemon_cx, robot);
+    good_krang = new Krang::Hardware((Krang::Hardware::Mode) hwMode, &daemon_cx, good_robot);
 
     // Initialize the joystick channel
     int r = ach_open(&js_chan, "joystick-data", NULL);
@@ -730,9 +732,11 @@ int main(int argc, char* argv[]) {
     }
 
     robot = setParameters(robot, allBetas.row(betaIndex), 4);
-    good_robot = setParameters(robot, allBetas.row(betaBestIndex), 4);
+    good_robot = setParameters(good_robot, allBetas.row(betaBestIndex), 4);
     world = std::make_shared<World>();
     world->addSkeleton(robot);
+    world->addSkeleton(good_robot);
+
 
     // Read the gains from the command line
     /*
