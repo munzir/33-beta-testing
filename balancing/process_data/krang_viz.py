@@ -6,8 +6,8 @@ import matplotlib.mlab as mlab
 
 
 # Read Data
-runs = [str(x) for x in [0,1,2]]
-betas = [str(x) for x in [16,32,64,190]]
+runs = [str(x) for x in [0,1,2,3,4,5,6]]
+betas = [str(x) for x in [16,32,64,128,190]]
 
 full = {}
 for beta in betas:
@@ -15,7 +15,7 @@ for beta in betas:
     for run in runs:
         full[beta][run] = {}
 
-        data_file = "beta"+str(beta)+"_"+str(run)
+        data_file = "sergio_data/betaVectors1initialBetahardwareAll190Vectorsnum"+str(beta)+"trial"+str(run)+"statedump.txt"
 
         with open(data_file) as f:
             lines = f.readlines()
@@ -38,12 +38,15 @@ for beta in betas:
         full[beta][run]['raw'] = data
         full[beta][run]['raw_time'] = time
 
+        print time
+
         start = np.argmax(np.abs(data[:,1])>1)
         end = np.argmax(time-time[start]>60)
 
 
+        print beta,run,end,start
 
-        steady = end-np.argmax(np.abs(data[end:start:-1,1])>0.3*np.max(np.abs(data[start:end,1])))
+        steady = end-np.argmax(np.abs(data[end:start:-1,1])>0.5*np.max(np.abs(data[start:end,1])))
 
 
         full[beta][run]['trim'] = data[start:end,:]
@@ -124,7 +127,7 @@ titles = ["dt","leftWheel","rightWheel","theta","dtheta","x/R","dx/R","psi","dps
 plt.figure()
 run = 'all'
 for i,beta in enumerate(betas):
-    plt.subplot(4,2,2*i+2)    
+    plt.subplot(5,2,2*i+2)    
     x = np.abs(full[beta]['0']['steady'][:,1])
     (mu,sigma) = norm.fit(x)
     print mu,sigma
@@ -133,7 +136,7 @@ for i,beta in enumerate(betas):
     l = plt.plot(bins, y, 'r--', linewidth=2)
 
     
-    plt.subplot(4,2,2*i+1)
+    plt.subplot(5,2,2*i+1)
     for run in runs:
         # t = full[beta][run]['time']
         # x = np.convolve(full[beta][run]['trim'][:,1],np.ones(10)/10.0)
@@ -151,7 +154,7 @@ for i,beta in enumerate(betas):
 
 plt.figure()
 for i,beta in enumerate(betas):
-    plt.subplot(4,1,i+1)
+    plt.subplot(5,1,i+1)
     for run in runs:
         t = full[beta][run]['time']
         x = np.convolve(full[beta][run]['trim'][:,1],np.ones(10)/10.0)
