@@ -48,8 +48,16 @@ for beta in betas:
 
         steady = end-np.argmax(np.abs(data[end:start:-1,1])>0.5*np.max(np.abs(data[start:end,1])))
 
-
+        
+        
+        
         full[beta][run]['trim'] = data[start:end,:]
+        
+        km = 12*0.00706
+        # Torque = Current*15*km = Current*1.2708
+        # Transform current to torque
+        full[beta][run]['trim'][:,1] = full[beta][run]['trim'][:,1]*15*km                
+        
         full[beta][run]['steady'] = data[steady:end,:]
         full[beta][run]['time'] = time[start:end]-time[start]
 
@@ -73,7 +81,11 @@ for beta in betas:
 
         full[beta][run]['resting_pos'] = full[beta][run]['trim'][-1,5]
         full[beta][run]['overshoot_pos'] = np.argmax(np.abs(full[beta][run]['trim'][:,5]))
-
+        
+        full[beta][run]['power'] = np.multiply(full[beta][run]['trim'][:,1], full[beta][run]['trim'][:,6])
+        
+        
+        
 
 
 
@@ -93,6 +105,7 @@ for beta in betas:
 
 
 titles = ["dt","leftWheel","rightWheel","theta","dtheta","x/R","dx/R","psi","dpsi"]
+
 
 # pose_out_file << dt << " " << input[0] << " " << input[1] << " ";
 # pose_out_file << state.transpose() << " ";
@@ -157,15 +170,17 @@ for i,beta in enumerate(betas):
     plt.subplot(5,1,i+1)
     for run in runs:
         t = full[beta][run]['time']
-        x = np.convolve(full[beta][run]['trim'][:,1],np.ones(10)/10.0)
+        #x = np.convolve(full[beta][run]['trim'][:,1],np.ones(10)/10.0)
+        x = np.convolve(full[beta][run]['power'],np.ones(10)/10.0)
         # x = full[beta][run]['trim'][:,5]
         plt.plot(t,x[:len(t)],label="run "+run)
     plt.title("Beta Iteration "+beta)
-    plt.ylim(-40,20)
+    plt.ylim(-4,150)
     plt.xlabel('Time (s)')
     plt.ylabel('Current (A)')
     plt.grid()
-    plt.legend()
+    plt.subplots_adjust(hspace=1)
+    #plt.legend()
 
 #10 10 95 95 20 60
 
