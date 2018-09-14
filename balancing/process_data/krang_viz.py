@@ -16,6 +16,7 @@ for beta in betas:
         full[beta][run] = {}
 
         data_file = "sergio_data/betaVectors1initialBetahardwareAll190Vectorsnum"+str(beta)+"trial"+str(run)+"statedump.txt"
+        data_file = "sergio_data/betaVectors1initialBetahardwareAll190Vectorsnum"+str(beta)+"trial"+str(run)+"statedump.txt"
 
         with open(data_file) as f:
             lines = f.readlines()
@@ -55,6 +56,7 @@ for beta in betas:
 
 
         t10 = np.argmax(full[beta][run]['time']>10)
+        t20 = np.argmax(full[beta][run]['time']>20)
         t40 = np.argmax(full[beta][run]['time']>10)
 
         N = 20.0
@@ -157,15 +159,24 @@ for i,beta in enumerate(betas):
     plt.subplot(5,1,i+1)
     for run in runs:
         t = full[beta][run]['time']
-        x = np.convolve(full[beta][run]['trim'][:,1],np.ones(10)/10.0)
+        t20 = np.argmax(t>20)
+        t = t[:t20]
+        x = np.convolve(full[beta][run]['trim'][:t20,1],np.ones(10)/10.0)
         # x = full[beta][run]['trim'][:,5]
         plt.plot(t,x[:len(t)],label="run "+run)
-    plt.title("Beta Iteration "+beta)
-    plt.ylim(-40,20)
-    plt.xlabel('Time (s)')
-    plt.ylabel('Current (A)')
+    plt.title("Beta Iteration "+beta,fontsize=18)
+    # plt.ylim(-40,20)
+    plt.ylim(0,150)
+
+    if i == len(betas)-1:
+        plt.xlabel('Time (s)',fontsize=18)
+    if i == len(betas)/2:
+        plt.ylabel('Current (A)',fontsize=18)
+
+    plt.tick_params(labelsize=18)
     plt.grid()
-    plt.legend()
+
+    # plt.legend()
 
 #10 10 95 95 20 60
 
