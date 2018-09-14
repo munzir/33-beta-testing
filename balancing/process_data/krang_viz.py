@@ -49,8 +49,16 @@ for beta in betas:
 
         steady = end-np.argmax(np.abs(data[end:start:-1,1])>0.5*np.max(np.abs(data[start:end,1])))
 
-
+        
+        
+        
         full[beta][run]['trim'] = data[start:end,:]
+        
+        km = 12*0.00706
+        # Torque = Current*15*km = Current*1.2708
+        # Transform current to torque
+        full[beta][run]['trim'][:,1] = full[beta][run]['trim'][:,1]*15*km                
+        
         full[beta][run]['steady'] = data[steady:end,:]
         full[beta][run]['time'] = time[start:end]-time[start]
 
@@ -75,7 +83,11 @@ for beta in betas:
 
         full[beta][run]['resting_pos'] = full[beta][run]['trim'][-1,5]
         full[beta][run]['overshoot_pos'] = np.argmax(np.abs(full[beta][run]['trim'][:,5]))
-
+        
+        full[beta][run]['power'] = np.multiply(full[beta][run]['trim'][:,1], full[beta][run]['trim'][:,6])
+        
+        
+        
 
 
 
@@ -95,6 +107,7 @@ for beta in betas:
 
 
 titles = ["dt","leftWheel","rightWheel","theta","dtheta","x/R","dx/R","psi","dpsi"]
+
 
 # pose_out_file << dt << " " << input[0] << " " << input[1] << " ";
 # pose_out_file << state.transpose() << " ";
@@ -175,6 +188,7 @@ for i,beta in enumerate(betas):
 
     plt.tick_params(labelsize=18)
     plt.grid()
+    plt.legend()
 
     # plt.legend()
 
