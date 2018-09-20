@@ -41,7 +41,7 @@ for beta in betas:
         full[beta][run]['raw'] = data
         full[beta][run]['raw_time'] = time
 
-        N = 10.0
+        N = 20.0
         data[:,1] = np.convolve(data[:,1],np.ones(int(N))/N)[int(N/2):-int(N/2)+1]
         # print smoothed.shape, data[:,1].shape
         # exit()
@@ -75,6 +75,7 @@ for beta in betas:
         full[beta][run]['trim'] = data[start:end,:]
         full[beta][run]['time'] = time[start:end]-time[start]
 
+
         t10 = np.argmax(full[beta][run]['time']>10)
         t20 = np.argmax(full[beta][run]['time']>20)
         t40 = np.argmax(full[beta][run]['time']>10)
@@ -90,19 +91,19 @@ for beta in betas:
         km = 12*0.00706  
         full[beta][run]['power'] = np.abs(np.multiply(full[beta][run]['trim'][:,1]*15*km  , full[beta][run]['trim'][:,6]))
         full[beta][run]['energy'] = np.cumsum(full[beta][run]['power'])
-        # full[beta][run]['current'] = full[beta][run]['power'] #full[beta][run]['trim'][:,1]
-        full[beta][run]['current'] = full[beta][run]['trim'][:,1]
+        full[beta][run]['current'] = full[beta][run]['power'] #full[beta][run]['trim'][:,1]
+        # full[beta][run]['current'] = full[beta][run]['trim'][:,1]
 
         
-        full[beta][run]['trans'] = full[beta][run]['power'][:t20]
-        full[beta][run]['steady'] = full[beta][run]['power'][t20:]
+        full[beta][run]['trans'] = full[beta][run]['power'][:t10]
+        full[beta][run]['steady'] = full[beta][run]['power'][t10:]
 
 
         # N = 20.0
         # smoothed = np.convolve(full[beta][run]['trim'][:,1],np.ones(int(N))/N)
 
         integral = np.abs(np.multiply(full[beta][run]['trim'][:,1],data[start:end,0]))
-        trans_integral = np.sum(integral[:t10])
+        trans_integral = np.sum(integral[:t20])
         steady_integral = np.sum(integral[t20:])
 
 
@@ -110,9 +111,13 @@ for beta in betas:
         # full[beta][run]['steady_power'] = np.mean(full[beta][run]['power'][])
 
 
-        full[beta][run]['overshoot_pos'] = np.max(full[beta][run]['trim'][:,1])
+
+        full[beta][run]['overshoot_pos'] = 0.27*np.max(full[beta][run]['trim'][:,1])
         full[beta][run]['steady_pos_time'] = time[steady_pos]
-        full[beta][run]['steady_pos'] = pos
+        full[beta][run]['steady_pos'] = 0.27*pos
+
+        full[beta][run]['overshoot_power'] = np.max(full[beta][run]['trans'])   
+        full[beta][run]['steady_avg_power'] = np.mean(np.abs(np.multiply(full[beta][run]['steady'],full[beta][run]['trim'][t10:,0])))
 
         full[beta][run]['trans_integral'] = (1.0/3600)*trans_integral
         full[beta][run]['steady_integral'] = (1.0/3600)*steady_integral
@@ -125,13 +130,15 @@ for beta in betas:
         
 
 
-
+test = {}
 for beta in betas:
     print
-    for value in ['overshoot_pos','steady_pos','steady_pos_time','trans_integral','steady_integral']:
+    test[beta] = {}
+    for value in ['overshoot_pos','steady_pos','steady_pos_time','overshoot_power','steady_avg_power']:
         avg = np.average([full[beta][run][value] for run in runs])
         std = np.std([full[beta][run][value] for run in runs])
 
+        test[beta][value] = avg
 
         # x = "{0:.3g}".format(avg)
         # d = len(x.split(".")[1])
@@ -151,8 +158,16 @@ for beta in betas:
         # plt.plot(data[start:steady_pos,5])
         # plt.show()
 
+for beta in betas:
+    for value in ['overshoot_pos','steady_pos','steady_pos_time','overshoot_power','steady_avg_power']:
+        avg = np.average([full[beta][run][value] for run in runs])
+        std = np.std([full[beta][run][value] for run in runs])
 
-exit()
+        print value, 1.0*(test[betas[0]][value]-avg)/test[betas[0]][value]
+
+
+
+# exit()
 # plt.figure()
 # colors = ['r','k','b','k','g']
 # for b,beta in enumerate(betas):
@@ -216,62 +231,154 @@ exit()
 
 
 
-f, ax = plt.subplots(5,1,sharex=True)
+f, ax = plt.subplots(5,2,sharex='col')
 colors = ['r','k','b','k','g']
-for b,beta in enumerate(betas):
-    full[beta]['all'] = {}
-    full[beta]['all']['trim'] = full[beta][runs[0]]['trim']
+for j in [0,1]:
+    for b,beta in enumerate(betas):
+        full[beta]['all'] = {}
+        full[beta]['all']['trim'] = full[beta][runs[0]]['trim']
 
-    full[beta]['all']['current'] = {}
-    array_len = min([len(full[beta][run]['current']) for run in runs])
-    full[beta]['all']['current']['stack'] = np.zeros((array_len,len(runs)))
-    for i,run in enumerate(runs[1:]):
-        print i
-        full[beta]['all']['trim'] = np.append(full[beta]['all']['trim'],full[beta][run]['trim'],axis=0)
+        full[beta]['all']['current'] = {}
+        array_len = min([len(full[beta][run]['current']) for run in runs])
+        t10 = np.argmax(full[beta][run[0]]['time']>10)
 
-        full[beta]['all']['current']['stack'][:,i] = full[beta][run]['current'][:array_len]
+        print array_len,
 
-    full[beta]['all']['current']['mean'] = np.mean(full[beta]['all']['current']['stack'],axis=1)
-    full[beta]['all']['current']['std'] = np.std(full[beta]['all']['current']['stack'],axis=1)
+        if j==0:
+            s = t10
+        else:
+            s = array_len-t10
 
-    t = full[beta][runs[0]]['time'][:array_len]
-    mean = full[beta]['all']['current']['mean']
-    std = full[beta]['all']['current']['std']
 
-    mean = np.convolve(mean,np.ones(1)/1.0)[:len(t)]
-    
-    # t = t[::10]
-    # mean = mean[::10]
-    # std = std[::10]
+        print array_len,t10
 
-    # if beta in ['32','128']:
-    #     continue
-    # ax[b].plot(t,mean, label=r"$\beta_{"+str(beta)+"}$",color='r',alpha=1.0)
-    # ax[b].plot(t,mean-1*std,alpha=0.2,color=colors[b])
-    # ax[b].plot(t,mean+1*std,alpha=0.2,color=colors[b])
-    ax[b].fill_between(t,mean-1.5*std,mean+1.5*std,alpha=1.0,color='lightgrey')
+        full[beta]['all']['current']['stack'] = np.zeros((s,len(runs)))
+        for i,run in enumerate(runs[1:]):
+            print i
+            full[beta]['all']['trim'] = np.append(full[beta]['all']['trim'],full[beta][run]['trim'],axis=0)
 
-    for i,run in enumerate(runs[1:]):
-        ax[b].plot(t,full[beta]['all']['current']['stack'][:,i],alpha=0.8)#,color='g')
+            if j==0:
+                full[beta]['all']['current']['stack'][:,i] = full[beta][run]['current'][:s]
+            else:
+                full[beta]['all']['current']['stack'][:,i] = full[beta][run]['current'][t10:array_len]
 
-    ax[b].plot(t,mean, label=r"$\beta_{"+str(beta)+"}$",color='k',alpha=1.0)
+        full[beta]['all']['current']['mean'] = np.mean(full[beta]['all']['current']['stack'],axis=1)
+        full[beta]['all']['current']['std'] = np.std(full[beta]['all']['current']['stack'],axis=1)
 
-    # plt.yscale('log')
+        if j==0:
+            t = full[beta][runs[0]]['time'][:s]
+        else:
+            t = full[beta][runs[0]]['time'][t10:array_len]
+        mean = full[beta]['all']['current']['mean']
+        std = full[beta]['all']['current']['std']
 
-    ax[b].text(0.95,0.32,r"$\beta_{"+str(beta)+"}$", verticalalignment='top', horizontalalignment='right',transform=ax[b].transAxes,fontsize=18, bbox={'facecolor':'white', 'alpha':1.0, 'pad':10})
+        mean = np.convolve(mean,np.ones(1)/1.0)[:len(t)]
+        
+        # t = t[::10]
+        # mean = mean[::10]
+        # std = std[::10]
 
-    if b == len(betas)-1:
-        ax[b].set_xlabel(r'Time (s)',fontsize=18)
-    if b == len(betas)/2:
-        ax[b].set_ylabel(r'Current (A)',fontsize=18)
+        # if beta in ['32','128']:
+        #     continue
+        # ax[b].plot(t,mean, label=r"$\beta_{"+str(beta)+"}$",color='r',alpha=1.0)
+        # ax[b].plot(t,mean-1*std,alpha=0.2,color=colors[b])
+        # ax[b].plot(t,mean+1*std,alpha=0.2,color=colors[b])
+        
+        # ax[b,j].fill_between(t,mean-1.5*std,mean+1.5*std,alpha=1.0,color='lightgrey')
 
-    ax[b].tick_params(labelsize=18)
-    ax[b].grid()
+        for i,run in enumerate(runs[1:]):
+            ax[b,j].plot(t,full[beta]['all']['current']['stack'][:,i],alpha=0.8)#,color='g')
 
-# plt.xlabel("Time (s)")
-# plt.ylabel("Log Power (log W)")
-# plt.legend()
+        # ax[b,j].plot(t,mean, label=r"$\beta_{"+str(beta)+"}$",color='k',alpha=1.0)
+
+        # plt.yscale('log')
+
+        ax[b,j].text(0.95,0.75,r"$\beta_{"+str(beta)+"}$", verticalalignment='top', horizontalalignment='right',transform=ax[b,j].transAxes,fontsize=18, bbox={'facecolor':'white', 'alpha':1.0, 'pad':10})
+
+        if b == len(betas)-1:
+            ax[b,j].set_xlabel(r'Time (s)',fontsize=18)
+        if b == len(betas)/2:
+            if j == 0:
+                ax[b,j].set_ylabel(r'Instantaneous Power during Standing Action (W)',fontsize=18)
+            else:
+                ax[b,j].set_ylabel(r'Instantaneous Power during Balancing Action (W)',fontsize=18)
+
+        if j==0:
+            ax[b,j].set_ylim(-10,160)
+        else:
+            ax[b,j].set_ylim(-1,13)
+            ax[b,j].set_xticks(np.arange(10,60,10))
+
+        ax[b,j].tick_params(labelsize=18)
+        ax[b,j].grid()
+
+    # plt.xlabel("Time (s)")
+    # plt.ylabel("Log Power (log W)")
+    # plt.legend()
 plt.show()
+
+
+
+
+
+
+
+# f, ax = plt.subplots(5,1,sharex=True)
+# colors = ['r','k','b','k','g']
+# for b,beta in enumerate(betas):
+#     full[beta]['all'] = {}
+#     full[beta]['all']['trim'] = full[beta][runs[0]]['trim']
+
+#     full[beta]['all']['current'] = {}
+#     array_len = min([len(full[beta][run]['current']) for run in runs])
+#     full[beta]['all']['current']['stack'] = np.zeros((array_len,len(runs)))
+#     for i,run in enumerate(runs[1:]):
+#         print i
+#         full[beta]['all']['trim'] = np.append(full[beta]['all']['trim'],full[beta][run]['trim'],axis=0)
+
+#         full[beta]['all']['current']['stack'][:,i] = full[beta][run]['current'][:array_len]
+
+#     full[beta]['all']['current']['mean'] = np.mean(full[beta]['all']['current']['stack'],axis=1)
+#     full[beta]['all']['current']['std'] = np.std(full[beta]['all']['current']['stack'],axis=1)
+
+#     t = full[beta][runs[0]]['time'][:array_len]
+#     mean = full[beta]['all']['current']['mean']
+#     std = full[beta]['all']['current']['std']
+
+#     mean = np.convolve(mean,np.ones(1)/1.0)[:len(t)]
+    
+#     # t = t[::10]
+#     # mean = mean[::10]
+#     # std = std[::10]
+
+#     # if beta in ['32','128']:
+#     #     continue
+#     # ax[b].plot(t,mean, label=r"$\beta_{"+str(beta)+"}$",color='r',alpha=1.0)
+#     # ax[b].plot(t,mean-1*std,alpha=0.2,color=colors[b])
+#     # ax[b].plot(t,mean+1*std,alpha=0.2,color=colors[b])
+#     ax[b].fill_between(t,mean-1.5*std,mean+1.5*std,alpha=1.0,color='lightgrey')
+
+#     for i,run in enumerate(runs[1:]):
+#         ax[b].plot(t,full[beta]['all']['current']['stack'][:,i],alpha=0.8)#,color='g')
+
+#     ax[b].plot(t,mean, label=r"$\beta_{"+str(beta)+"}$",color='k',alpha=1.0)
+
+#     # plt.yscale('log')
+
+#     ax[b].text(0.95,0.32,r"$\beta_{"+str(beta)+"}$", verticalalignment='top', horizontalalignment='right',transform=ax[b].transAxes,fontsize=18, bbox={'facecolor':'white', 'alpha':1.0, 'pad':10})
+
+#     if b == len(betas)-1:
+#         ax[b].set_xlabel(r'Time (s)',fontsize=18)
+#     if b == len(betas)/2:
+#         ax[b].set_ylabel(r'Current (A)',fontsize=18)
+
+#     ax[b].tick_params(labelsize=18)
+#     ax[b].grid()
+
+# # plt.xlabel("Time (s)")
+# # plt.ylabel("Log Power (log W)")
+# # plt.legend()
+# plt.show()
 
 
 
